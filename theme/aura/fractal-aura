@@ -1,0 +1,29 @@
+#!/bin/bash
+# fractal-aura: the living Buddha wallpaper + mala rings + lotus transitions.
+# Usage: fractal-aura start|stop|restart|status
+# start is a no-op unless the active theme is "fractal" (and not disabled with
+# ~/.local/state/omarchy/toggles/fractal-aura-off).
+DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+QML="$DIR/shell.qml"
+THEME_FILE="$HOME/.local/state/omarchy/current/theme.name"
+OFF="$HOME/.local/state/omarchy/toggles/fractal-aura-off"
+
+running() { pgrep -f "quickshell .*-p $QML" >/dev/null; }
+active() { [[ -f $THEME_FILE ]] && [[ $(<"$THEME_FILE") == fractal ]]; }
+
+stop() { pkill -f "quickshell .*-p $QML" 2>/dev/null; return 0; }
+start() {
+  active || { echo "fractal-aura: theme is not fractal, not starting"; return 0; }
+  [[ -e $OFF ]] && { echo "fractal-aura: disabled ($OFF)"; return 0; }
+  running && return 0
+  command -v quickshell >/dev/null || { echo "fractal-aura: quickshell missing" >&2; return 1; }
+  setsid -f quickshell -n -p "$QML" >/dev/null 2>&1
+}
+
+case "${1:-start}" in
+  start) start ;;
+  stop) stop ;;
+  restart) stop; sleep 0.3; start ;;
+  status) if running; then echo running; else echo stopped; fi ;;
+  *) echo "usage: fractal-aura start|stop|restart|status" >&2; exit 2 ;;
+esac

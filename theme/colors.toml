@@ -1,0 +1,39 @@
+# ✿ FRACTAL ✿  a calm, spiritual palette
+# Deep indigo night, soft lotus pink, saffron gold, temple teal and warm candle
+# white. Nothing neon: every colour is a little dusty so it stays easy on the eyes.
+mode = "dark"
+
+accent = "#e6b35a"            # saffron gold
+selection = "#3a3163"         # violet dusk
+muted = "#6c6496"
+
+background = "#15122b"        # indigo night
+dark_background = "#100e22"
+darker_background = "#0b0a19"
+lighter_background = "#201c3d"
+
+foreground = "#e9dfcc"        # candle white
+dark_foreground = "#9188b5"   # lavender haze
+light_foreground = "#f1e8d8"
+bright_foreground = "#faf3e6"
+
+red = "#e48a9a"               # rose
+yellow = "#e8c46e"            # marigold
+orange = "#e9a170"            # apricot
+green = "#94cfa6"             # jade
+cyan = "#72c6c4"              # temple teal
+blue = "#8fa6e6"              # periwinkle
+magenta = "#c9a0e4"           # orchid
+brown = "#8d6a4b"             # sandalwood
+
+bright_red = "#f0a3b2"
+bright_yellow = "#f2d58f"
+bright_green = "#addcbb"
+bright_cyan = "#93d8d5"
+bright_blue = "#aabdf0"
+bright_magenta = "#dabaf0"
+
+# Hyprland draws no border on this theme (the mala ring replaces it), but the
+# shell derives its card borders from these gradients.
+hyprland_active_border = "rgba(e6b35aff) rgba(e7a1c4ff) rgba(a58ae6ff) rgba(72c6c4ff) 45deg"
+hyprland_inactive_border = "rgba(3a3163aa)"

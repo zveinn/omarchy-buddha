@@ -1,0 +1,5 @@
+#!/bin/bash
+# fractal theme: bring the living wallpaper back after login (no-op on other themes).
+AURA="$HOME/.config/omarchy/themes/fractal/aura/fractal-aura"
+[[ -x $AURA ]] && "$AURA" start
+exit 0

@@ -1,0 +1,9 @@
+#!/bin/bash
+# fractal theme: start the living wallpaper on fractal, stop it on any other theme.
+AURA="$HOME/.config/omarchy/themes/fractal/aura/fractal-aura"
+if [[ ${1:-} == fractal ]]; then
+  [[ -x $AURA ]] && "$AURA" restart
+else
+  pkill -f "quickshell .*-p $HOME/.config/omarchy/themes/fractal/aura/shell.qml" 2>/dev/null
+fi
+exit 0
