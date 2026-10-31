@@ -1,0 +1,18 @@
+#!/bin/bash
+# Runs the fractal screensaver (./saver.qml). Started by omarchy-launch-screensaver as
+#   fractal-screensaver org.omarchy.screensaver
+# so `pgrep/pkill -f org.omarchy.screensaver` (launcher guard, omarchy-system-lock) see it.
+# While it runs, the wallpaper aura is told to pause (`saver 1` on the fx feed).
+QML="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)/saver.qml"
+FEED="${XDG_RUNTIME_DIR:-/tmp}/fractal-fx"
+cursor() { hyprctl eval "hl.config({ cursor = { invisible = $1 } })" &>/dev/null || hyprctl keyword cursor:invisible "$1" &>/dev/null || true; }
+feed() { [[ -e $FEED ]] && echo "saver $1" >>"$FEED" 2>/dev/null; return 0; }
+pid=
+finish() { trap - EXIT; [[ -n $pid ]] && kill "$pid" 2>/dev/null; cursor false; feed 0; exit 0; }
+trap finish SIGINT SIGTERM SIGHUP SIGQUIT EXIT
+cursor true
+feed 1
+# argv[0] carries the class name too, so killing either process ends the screensaver
+bash -c 'exec -a org.omarchy.screensaver quickshell -n -p "$1"' _ "$QML" >/dev/null 2>&1 </dev/null &
+pid=$!
+wait "$pid"
