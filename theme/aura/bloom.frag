@@ -59,7 +59,7 @@ void main() {
         c += vec3(0.98, 0.82, 0.50) * sp * 1.6; v += sp;
     }
     // a whisper of indigo veil that clears as the bloom opens
-    float veil = (mode < 0.5 ? (1.0 - prog) : (mode < 1.5 ? prog : 0.0)) * 0.35 * smoothstep(1.4, 0.2, length(p));
+    float veil = (mode < 0.5 ? (1.0 - prog) : (mode < 1.5 ? prog : 0.0)) * 0.22 * smoothstep(1.4, 0.2, length(p));
     float a = clamp(v * env * 0.85 + veil * env, 0.0, 1.0);
     vec3 col = c * env * 0.85 + vec3(0.07, 0.05, 0.15) * veil * env;
     fragColor = vec4(min(col, vec3(a)), a) * qt_Opacity;

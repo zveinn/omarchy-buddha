@@ -45,5 +45,5 @@ void main() {
     c += vec3(0.92, 0.62, 0.78) * lotus + vec3(0.98, 0.84, 0.52) * core;
     v += lotus + core;
     float al = clamp(v * env * 0.8, 0.0, 0.9);
-    fragColor = vec4(min(c * env * 0.8, vec3(al)), al) * qt_Opacity;
+    fragColor = vec4(min(c * env * 0.55, vec3(al * 0.7)), al * 0.7) * qt_Opacity;
 }
