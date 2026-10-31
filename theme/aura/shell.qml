@@ -28,11 +28,13 @@ ShellRoot {
   }
 
   signal ringList(string list)
-  signal transCmd(string cmd, int a, int x, int y, int w, int h)
+  // fx..fh: where the window comes from (toggle); equal to x..h otherwise
+  signal transCmd(string cmd, int a, int x, int y, int w, int h, int fx, int fy, int fw, int fh)
 
   // hyprland.lua (and the screensaver) append lines to this file:
   //   ring list <addr x y w h floating active [masks..]>;...
-  //   trans open|close|toggle x y w h      trans workspace <id> <dir>
+  //   trans open|close x y w h             trans workspace <id> <dir>
+  //   trans toggle x y w h [from-x from-y from-w from-h]
   //   cover <monitor> 0|1                  saver 0|1
   FileView {
     id: fxFeed
@@ -50,8 +52,9 @@ ShellRoot {
         if (p[0] === "ring" && p[1] === "list") shell.ringList(line.slice(9).trim())
         else if (p[0] === "trans") {
           const v = p.slice(2).map(Number)
-          if (p[1] === "workspace") shell.transCmd("ws", v[0], v[1] || 1, 0, 0, 0)
-          else shell.transCmd(p[1], 0, v[0], v[1], v[2], v[3])
+          if (p[1] === "workspace") shell.transCmd("ws", v[0], v[1] || 1, 0, 0, 0, 0, 0, 0, 0)
+          else if (v.length >= 8) shell.transCmd(p[1], 0, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7])
+          else shell.transCmd(p[1], 0, v[0], v[1], v[2], v[3], v[0], v[1], v[2], v[3])
         } else if (p[0] === "cover" && p.length >= 3) {
           const c = Object.assign({}, shell.covered); c[p[1]] = p[2] === "1"; shell.covered = c
         } else if (p[0] === "saver") shell.saver = p[1] === "1"
@@ -61,9 +64,9 @@ ShellRoot {
   }
   IpcHandler {
     target: "fractal"
-    function workspace(id: int): void { shell.transCmd("ws", id, 1, 0, 0, 0) }
-    function open(x: int, y: int, w: int, h: int): void { shell.transCmd("open", 0, x, y, w, h) }
-    function close(x: int, y: int, w: int, h: int): void { shell.transCmd("close", 0, x, y, w, h) }
+    function workspace(id: int): void { shell.transCmd("ws", id, 1, 0, 0, 0, 0, 0, 0, 0) }
+    function open(x: int, y: int, w: int, h: int): void { shell.transCmd("open", 0, x, y, w, h, x, y, w, h) }
+    function close(x: int, y: int, w: int, h: int): void { shell.transCmd("close", 0, x, y, w, h, x, y, w, h) }
     function saver(on: bool): void { shell.saver = on }
   }
 
@@ -84,9 +87,9 @@ ShellRoot {
       visible: shell.themeActive
       Connections {
         target: shell
-        function onTransCmd(cmd, a, x, y, w, h) {
+        function onTransCmd(cmd, a, x, y, w, h, fx, fy, fw, fh) {
           if (cmd === "ws") bloom.workspace(a, x)
-          else bloom.windowFx(cmd === "close" ? 1 : (cmd === "toggle" ? 2 : 0), x, y, w, h)
+          else bloom.windowFx(cmd === "close" ? 1 : (cmd === "toggle" ? 2 : 0), x, y, w, h, fx, fy, fw, fh)
         }
       }
     }

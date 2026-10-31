@@ -60,14 +60,16 @@ hl.config({
 })
 
 -- Curves: unhurried, like a breath. Nothing snaps, nothing bounces.
-hl.curve("lotusOpen", { type = "bezier", points = { { 0.22, 1.0 }, { 0.36, 1.0 } } })   -- soft ease-out
-hl.curve("lotusClose", { type = "bezier", points = { { 0.55, 0.0 }, { 0.75, 0.4 } } })  -- gentle ease-in
+-- aura/Bloom.qml animates its petals with these very control points, so the
+-- petals and the windows move as one.
+hl.curve("lotusOpen", { type = "bezier", points = { { 0.25, 0.8 }, { 0.35, 1.0 } } })   -- soft ease-out, no snap in the first frames
+hl.curve("lotusClose", { type = "bezier", points = { { 0.5, 0.0 }, { 0.75, 0.75 } } })  -- ease-in that still lands softly (no cut-off pop)
 hl.curve("breath", { type = "bezier", points = { { 0.45, 0.0 }, { 0.25, 1.0 } } })      -- in-out
 hl.curve("still", { type = "bezier", points = { { 0, 0 }, { 1, 1 } } })
 
 -- Motion: ~200-300 ms everywhere (speed is in 100 ms units).
 hl.animation({ leaf = "windows", enabled = true, speed = 2.6, bezier = "lotusOpen" })
-hl.animation({ leaf = "windowsIn", enabled = true, speed = 2.8, bezier = "lotusOpen", style = "popin 88%" })
+hl.animation({ leaf = "windowsIn", enabled = true, speed = 2.8, bezier = "lotusOpen", style = "popin 90%" })
 hl.animation({ leaf = "windowsOut", enabled = true, speed = 2.4, bezier = "lotusClose", style = "popin 92%" })
 hl.animation({ leaf = "windowsMove", enabled = true, speed = 2.6, bezier = "breath" })
 hl.animation({ leaf = "border", enabled = true, speed = 2, bezier = "still" })
@@ -124,7 +126,12 @@ end
 local last_key = nil
 local last_cover = {}
 local last_float = {}
+local last_geo = {}
 local on_float_toggle = nil
+local function geo(w)
+  local ok, g = pcall(function() return string.format("%d %d %d %d", w.at.x, w.at.y, w.size.x, w.size.y) end)
+  return ok and g or nil
+end
 local B = 12
 local function update()
   local aw = hl.get_active_window()
@@ -134,7 +141,10 @@ local function update()
     local fl = aw.floating and true or false
     local prev = last_float[aaddr]
     last_float[aaddr] = fl
-    if prev ~= nil and prev ~= fl and on_float_toggle then on_float_toggle(aw) end
+    -- the rect the window had on the previous tick: where a toggle starts from
+    local from = last_geo[aaddr]
+    last_geo[aaddr] = geo(aw)
+    if prev ~= nil and prev ~= fl and on_float_toggle then on_float_toggle(aw, from) end
   end)
   local covers = {}
   local ok, line = pcall(function()
@@ -234,11 +244,6 @@ hl.timer(function() update() end, { timeout = 16, type = "repeat" })
 --   float/fullscreen: one soft ring of petals at the new geometry
 --   workspace switch: a lotus mark and singing-bowl ripples from the centre
 local function tfx(args) fractal_fx_send("trans " .. args) end
-local function geo(w)
-  local ok, g = pcall(function() return string.format("%d %d %d %d", w.at.x, w.at.y, w.size.x, w.size.y) end)
-  return ok and g or nil
-end
-
 local last_ws = nil
 hl.on("workspace.active", function(ws)
   local ok, id = pcall(function() return ws.id end)
@@ -265,15 +270,24 @@ hl.on("window.open", function(w)
   end, { timeout = 10, type = "oneshot" })
 end)
 
-local function rebloom(w)
+-- float/fullscreen: Hyprland slides the window from its old rect to the new one
+-- (windowsMove), so the petals get both rects and travel along with it.
+local function rebloom(w, from)
   local g = geo(w)
-  if g then tfx("toggle " .. g) end
+  if not g then return end
+  if not from then
+    local ok, a = pcall(function() return tostring(w.address) end)
+    from = ok and last_geo[a] or nil
+  end
+  tfx("toggle " .. g .. " " .. (from or g))
+  pcall(function() last_geo[tostring(w.address)] = g end)
 end
 hl.on("window.fullscreen", function(w) if w then rebloom(w) end end)
 on_float_toggle = rebloom
 
 hl.on("window.close", function(w)
   if not w then return end
+  pcall(function() local a = tostring(w.address); last_geo[a] = nil; last_float[a] = nil end)
   local g = geo(w)
   if g then tfx("close " .. g) end
 end)
