@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "fractal.bar",
+  "name": "Fractal Bar",
+  "version": "1.0.0",
+  "author": "Omarchy",
+  "description": "Omarchy bar clone with auto-hide (bar.autoHide in shell.json)",
+  "kinds": [
+    "bar"
+  ],
+  "entryPoints": {
+    "bar": "Bar.qml"
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.bar"
+  }
+}

@@ -1,0 +1,14 @@
+/* fractal theme layer (written while the fractal theme is active, removed on
+   any other theme): indigo night for GTK3 apps. */
+@define-color theme_bg_color #15122b;
+@define-color theme_base_color #100e22;
+@define-color theme_fg_color #e9dfcc;
+@define-color theme_text_color #e9dfcc;
+@define-color theme_selected_bg_color #3a3163;
+@define-color theme_selected_fg_color #faf3e6;
+@define-color theme_unfocused_bg_color #15122b;
+@define-color theme_unfocused_base_color #100e22;
+@define-color borders #2b2550;
+window, .background, headerbar, .sidebar { background-color: #15122b; }
+.view, treeview, textview text, iconview { background-color: #100e22; }
+*:selected, selection { background-color: #3a3163; color: #faf3e6; }

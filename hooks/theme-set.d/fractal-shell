@@ -1,0 +1,141 @@
+#!/bin/bash
+# fractal theme: desktop layers that live outside the theme dir.
+#
+# On `fractal` this records what is there now and then switches on:
+#   - shell.json: bar.id -> fractal.bar, bar widgets omarchy.X -> fractal.X,
+#     omarchy.menu disabled (launcher calls route to fractal.menu),
+#     fractal.* removed from disabledPlugins
+#   - GTK3/GTK4 indigo css (~/.config/gtk-{3,4}.0/gtk.css)
+#   - branding about.txt / screensaver.txt -> the theme's art
+#   - ~/.local/bin/omarchy-launch-screensaver -> the Buddha screensaver
+# On ANY other theme it puts every one of those back exactly as recorded in
+# ~/.local/state/omarchy/fractal/ (never by comparing with the theme files),
+# then forgets the record. Running it twice is safe either way.
+set -u
+THEME="${1:-}"
+T="$HOME/.config/omarchy/themes/fractal"
+L="$T/layers"
+S="$HOME/.local/state/omarchy/fractal"
+CFG="$HOME/.config/omarchy/shell.json"
+IDS='["agents","audio","bluetooth","clock","menu","monitor","network","power","tray","weather","workspaces"]'
+
+log() { printf 'fractal-shell: %s\n' "$*" >&2; }
+
+# Write $2 (a temp file) over $1 without breaking a symlinked shell.json.
+replace_file() {
+  local dst=$1 tmp=$2
+  if [[ -L $dst ]]; then cat "$tmp" > "$dst"; rm -f "$tmp"; else mv -f "$tmp" "$dst"; fi
+}
+
+# ---- generic path record / restore ----------------------------------------
+save_path() { # key path
+  local d="$S/paths/$1" p=$2
+  [[ -f $d/kind ]] && return 0          # already recorded this session
+  mkdir -p "$d"
+  printf '%s\n' "$p" > "$d/path"
+  if [[ -L $p ]]; then readlink "$p" > "$d/target"; echo link > "$d/kind"
+  elif [[ -f $p ]]; then cp -a "$p" "$d/data"; echo file > "$d/kind"
+  elif [[ -e $p ]]; then echo other > "$d/kind"   # a dir etc: we leave it alone
+  else echo absent > "$d/kind"; fi
+}
+restore_path() { # recorded dir
+  local d=$1 p kind
+  p=$(cat "$d/path") kind=$(cat "$d/kind")
+  case $kind in
+    link) rm -f "$p"; ln -sfn "$(cat "$d/target")" "$p" ;;
+    file) rm -f "$p"; cp -a "$d/data" "$p" ;;
+    absent) [[ -L $p || -f $p ]] && rm -f "$p" ;;
+  esac
+}
+put_link() { # key path target
+  save_path "$1" "$2"
+  [[ $(cat "$S/paths/$1/kind") == other ]] && return 0
+  local dir; dir=$(dirname "$2")
+  if [[ ! -d $dir ]]; then mkdir -p "$dir" && printf '%s\n' "$dir" >> "$S/created-dirs"; fi
+  ln -sfn "$3" "$2"
+}
+
+# ---- shell.json ------------------------------------------------------------
+shell_apply() {
+  command -v jq >/dev/null || { log "jq missing: bar/launcher plugins not switched"; return 0; }
+  [[ -f $CFG ]] && jq -e . "$CFG" >/dev/null 2>&1 || return 0
+  [[ -d $HOME/.config/omarchy/plugins/fractal.bar ]] || { log "fractal plugins not installed"; return 0; }
+  if [[ ! -f $S/shell.orig.json ]]; then
+    jq '{has_bar_id: ((.bar|type)=="object" and (.bar|has("id"))), bar_id: .bar.id,
+         has_center: ((.bar|type)=="object" and (.bar|has("centerAnchor"))), center: .bar.centerAnchor,
+         has_layout: ((.bar|type)=="object" and (.bar|has("layout"))), layout: .bar.layout,
+         has_dp: has("disabledPlugins"), dp: .disabledPlugins,
+         has_csr: has("cloneSourceRestores"), csr: .cloneSourceRestores}' "$CFG" > "$S/shell.orig.json.tmp" \
+      && mv "$S/shell.orig.json.tmp" "$S/shell.orig.json" && cp -a "$CFG" "$S/shell.json.pre" || return 0
+  fi
+  local tmp; tmp=$(mktemp "$CFG.fractal.XXXXXX") || return 0
+  if jq --argjson ids "$IDS" '
+      def fr: if type == "string" and startswith("omarchy.") and ((ltrimstr("omarchy.")) as $n | $ids | index($n)) != null
+              then "fractal." + ltrimstr("omarchy.") else . end;
+      def fx: if type == "object" and has("id") then .id |= fr elif type == "string" then fr else . end;
+      .bar = (if (.bar|type) == "object" then .bar else {} end)
+      | .bar.id = "fractal.bar"
+      | (if (.bar|has("centerAnchor")) then .bar.centerAnchor |= fr else . end)
+      | (if (.bar.layout|type) == "object"
+         then .bar.layout |= with_entries(.value |= (if type == "array" then map(fx) else . end)) else . end)
+      | .disabledPlugins = ((.disabledPlugins // []) | map(select(startswith("fractal.") | not))
+                            | if index("omarchy.menu") == null then . + ["omarchy.menu"] else . end)
+      | .cloneSourceRestores = ((.cloneSourceRestores // [])
+                            | if index("fractal.menu") == null then . + ["fractal.menu"] else . end)
+    ' "$CFG" > "$tmp" && [[ -s $tmp ]]; then
+    if cmp -s "$tmp" "$CFG"; then rm -f "$tmp"; else replace_file "$CFG" "$tmp"; fi
+  else
+    rm -f "$tmp"; log "could not update shell.json"
+  fi
+}
+shell_restore() {
+  [[ -f $S/shell.orig.json && -f $CFG ]] || return 0
+  command -v jq >/dev/null || return 0
+  local tmp; tmp=$(mktemp "$CFG.fractal.XXXXXX") || return 0
+  if jq --slurpfile o "$S/shell.orig.json" '
+      ($o[0]) as $o
+      | (if $o.has_bar_id then .bar.id = $o.bar_id else del(.bar.id) end)
+      | (if $o.has_center then .bar.centerAnchor = $o.center else del(.bar.centerAnchor) end)
+      | (if $o.has_layout then .bar.layout = $o.layout else del(.bar.layout) end)
+      | (if $o.has_dp then .disabledPlugins = $o.dp else del(.disabledPlugins) end)
+      | (if $o.has_csr then .cloneSourceRestores = $o.csr else del(.cloneSourceRestores) end)
+    ' "$CFG" > "$tmp" && [[ -s $tmp ]]; then
+    if cmp -s "$tmp" "$CFG"; then rm -f "$tmp"; else replace_file "$CFG" "$tmp"; fi
+  else
+    rm -f "$tmp"; log "could not restore shell.json (record kept in $S)"; return 1
+  fi
+}
+
+# ---- apply / restore -------------------------------------------------------
+apply() {
+  [[ -d $L ]] || return 0
+  mkdir -p "$S/paths"
+  touch "$S/active"
+  shell_apply
+  put_link gtk3 "$HOME/.config/gtk-3.0/gtk.css" "$L/gtk-3.0.css"
+  put_link gtk4 "$HOME/.config/gtk-4.0/gtk.css" "$L/gtk-4.0.css"
+  local f
+  for f in about screensaver; do
+    [[ -f $T/branding/$f.txt ]] && put_link "branding-$f" "$HOME/.config/omarchy/branding/$f.txt" "$T/branding/$f.txt"
+  done
+  if [[ -x $L/omarchy-launch-screensaver ]]; then
+    put_link saver "$HOME/.local/bin/omarchy-launch-screensaver" "$L/omarchy-launch-screensaver"
+  fi
+}
+restore() {
+  [[ -f $S/active ]] || return 0
+  local ok=1 d
+  pkill -f '[o]rg.omarchy.screensaver.*fractal' 2>/dev/null
+  shell_restore || ok=0
+  for d in "$S"/paths/*/; do [[ -f $d/kind ]] && restore_path "$d"; done
+  if [[ -f $S/created-dirs ]]; then
+    while IFS= read -r d; do rmdir "$d" 2>/dev/null; done < "$S/created-dirs"
+  fi
+  if ((ok)); then rm -rf "$S"; fi
+}
+
+case $THEME in
+  fractal) apply ;;
+  *) restore ;;
+esac
+exit 0

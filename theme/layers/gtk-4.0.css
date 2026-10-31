@@ -1,0 +1,48 @@
+/* fractal theme layer (written while the fractal theme is active, removed on
+   any other theme): indigo night for GTK4 / libadwaita apps. */
+@define-color accent_color #e6b35a;
+@define-color accent_bg_color #c9954a;
+@define-color accent_fg_color #15122b;
+@define-color window_bg_color #15122b;
+@define-color window_fg_color #e9dfcc;
+@define-color view_bg_color #100e22;
+@define-color view_fg_color #e9dfcc;
+@define-color headerbar_bg_color #1a1634;
+@define-color headerbar_fg_color #e9dfcc;
+@define-color headerbar_backdrop_color #15122b;
+@define-color sidebar_bg_color #1a1634;
+@define-color sidebar_fg_color #e9dfcc;
+@define-color sidebar_backdrop_color #15122b;
+@define-color secondary_sidebar_bg_color #15122b;
+@define-color secondary_sidebar_backdrop_color #15122b;
+@define-color card_bg_color #201c3d;
+@define-color card_fg_color #e9dfcc;
+@define-color popover_bg_color #201c3d;
+@define-color popover_fg_color #e9dfcc;
+@define-color dialog_bg_color #201c3d;
+@define-color dialog_fg_color #e9dfcc;
+@define-color thumbnail_bg_color #201c3d;
+:root {
+  --accent-color: #e6b35a;
+  --accent-bg-color: #c9954a;
+  --accent-fg-color: #15122b;
+  --window-bg-color: #15122b;
+  --window-fg-color: #e9dfcc;
+  --view-bg-color: #100e22;
+  --view-fg-color: #e9dfcc;
+  --headerbar-bg-color: #1a1634;
+  --headerbar-fg-color: #e9dfcc;
+  --headerbar-backdrop-color: #15122b;
+  --sidebar-bg-color: #1a1634;
+  --sidebar-fg-color: #e9dfcc;
+  --sidebar-backdrop-color: #15122b;
+  --secondary-sidebar-bg-color: #15122b;
+  --secondary-sidebar-backdrop-color: #15122b;
+  --card-bg-color: #201c3d;
+  --card-fg-color: #e9dfcc;
+  --popover-bg-color: #201c3d;
+  --popover-fg-color: #e9dfcc;
+  --dialog-bg-color: #201c3d;
+  --dialog-fg-color: #e9dfcc;
+  --thumbnail-bg-color: #201c3d;
+}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "fractal.menu",
+  "name": "Fractal Omarchy menu",
+  "version": "1.0.0",
+  "author": "Omarchy",
+  "description": "Quickshell-powered Omarchy command menu",
+  "kinds": [
+    "menu",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "menu": "Menu.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Fractal Omarchy menu",
+    "description": "Launches the Omarchy menu",
+    "category": "Compositor",
+    "allowMultiple": false
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.menu"
+  }
+}
