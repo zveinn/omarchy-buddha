@@ -20,7 +20,7 @@ Soft and warm, never neon, and every text colour stays readable on the glass.
 
 **The Buddha**
 - A seated Buddha carved from weathered sandstone: warm grey stone with grain, mottling, fine hairline cracks (none across the face), small eroded pits and slightly chipped edges. The aura's saffron, lotus-pink and teal light catches the stone edges.
-- He sits centred on a stone lotus and is redrawn sharp at every resolution.
+- He sits centred on the original painted lotus: pink petals on a gilded seat, untouched; only the figure is stone.
 
 **Breathing fractal aura (live wallpaper)**
 - A GPU-shader mandala behind him: a scalloped 16-petal lotus ring, 8 large petals turning the other way, a 12-fold kaleidoscopic fractal filigree that folds with the breath, a flower-of-life garland, soft rays, outer ripples and a golden nimbus behind his head.
@@ -106,7 +106,7 @@ This switches the fractal layers off, restores every backed-up file in reverse o
 
 ```bash
 python3 mask.py           # cut the figure out of buddha-src.jpg  -> buddha-figure-gold.png
-python3 stone.py          # weathered stone + hairline cracks     -> buddha-figure.png
+python3 stone.py          # stone figure + cracks, original lotus -> buddha-figure.png
 python3 render_assets.py  # backgrounds, previews, unlock emblem, aura/buddha.png
 ```
 

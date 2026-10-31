@@ -1,5 +1,6 @@
 # stone.py: turn the gilded Buddha (buddha-figure-gold.png) into a carved,
-# weathered stone statue with subtle hairline cracks, keeping the exact same
+# weathered stone statue with subtle hairline cracks (the lotus seat keeps its
+# original gold and pink), keeping the exact same
 # silhouette/alpha so the aura and layout do not move. Deterministic (seeded).
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -108,3 +109,21 @@ al2 = np.where(edge_zone, al * np.clip(1.6 - 1.4 * chip, 0.45, 1), al)
 
 out = np.dstack([np.clip(col, 0, 1), np.clip(al2, 0, 1)])
 Image.fromarray((out * 255 + 0.5).astype(np.uint8), 'RGBA').save('buddha-figure.png', optimize=True)
+
+# keep the lotus seat exactly as painted: the original pixels (gold seat band +
+# pink petals) below the line where the folded legs meet the seat, plus every
+# petal that rises above that line, feathered over ~3 px. Only the Buddha is stone.
+from PIL import ImageFilter as _F
+xs = np.array([0, 120, 200, 300, 420, 500, 600, 700, 760, W], np.float32)
+ys = np.array([883, 887, 897, 900, 903, 901, 899, 893, 884, 881], np.float32)
+seam = np.interp(np.arange(W, dtype=np.float32), xs, ys)[None, :]
+below = np.clip((np.arange(H, dtype=np.float32)[:, None] - seam) / 3 + 0.5, 0, 1)
+petal = ((rgb[..., 2] - rgb[..., 1]) > -0.03) & (al > 0.02)
+pm = Image.fromarray((petal * 255).astype(np.uint8)).filter(_F.MaxFilter(3)).filter(_F.MinFilter(3)).filter(_F.MaxFilter(3))
+petal = np.asarray(pm.filter(_F.GaussianBlur(1.0))).astype(np.float32) / 255
+petal *= np.clip((np.arange(H, dtype=np.float32)[:, None] - 820) / 20, 0, 1)   # petals live low only
+keep = np.maximum(below, petal)[..., None]
+orig = a
+fin = np.asarray(Image.open('buddha-figure.png')).astype(np.float32) / 255
+mixed = fin * (1 - keep) + orig * keep
+Image.fromarray((np.clip(mixed, 0, 1) * 255 + 0.5).astype(np.uint8), 'RGBA').save('buddha-figure.png', optimize=True)
