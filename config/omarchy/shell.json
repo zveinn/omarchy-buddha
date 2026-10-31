@@ -1,0 +1,21 @@
+{
+  "bar": {
+    "autoHide": true,
+    "autoHideDelay": 500,
+    "autoHidePeek": false
+  },
+  "disabledPlugins": [
+    "fractal.agents",
+    "fractal.audio",
+    "fractal.bar",
+    "fractal.bluetooth",
+    "fractal.clock",
+    "fractal.menu",
+    "fractal.monitor",
+    "fractal.network",
+    "fractal.power",
+    "fractal.tray",
+    "fractal.weather",
+    "fractal.workspaces"
+  ]
+}

@@ -1,0 +1,14 @@
+#!/bin/bash
+# Turn the living fractal wallpaper (aura, mala rings, lotus transitions) off or on.
+# Off leaves the static Buddha background (theme/backgrounds) in place; the
+# choice survives reboots (~/.local/state/omarchy/toggles/fractal-aura-off).
+#   fractal-aura-toggle [on|off]
+OFF="$HOME/.local/state/omarchy/toggles/fractal-aura-off"
+AURA="$HOME/.config/omarchy/themes/fractal/aura/fractal-aura"
+want=${1:-}
+[[ -z $want ]] && { [[ -e $OFF ]] && want=on || want=off; }
+case $want in
+  off) mkdir -p "$(dirname "$OFF")" && touch "$OFF"; [[ -x $AURA ]] && "$AURA" stop; echo "fractal aura: off" ;;
+  on) rm -f "$OFF"; [[ -x $AURA ]] && "$AURA" start; echo "fractal aura: on" ;;
+  *) echo "usage: fractal-aura-toggle [on|off]" >&2; exit 2 ;;
+esac
