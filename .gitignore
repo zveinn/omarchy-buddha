@@ -1,3 +1,7 @@
 *.bak*
 *~
 /tmp/
+theme/src/buddha-up.png
+theme/src/alpha.npy
+theme/src/mask-preview.png
+__pycache__/
