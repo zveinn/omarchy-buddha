@@ -3,8 +3,8 @@
 # Usage: fractal-aura start|stop|restart|status
 # start is a no-op unless the active theme is "fractal" (and not disabled with
 # ~/.local/state/omarchy/toggles/fractal-aura-off).
-DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
-QML="$DIR/shell.qml"
+# always the installed copy, so a repo checkout can never start a second instance
+QML="$HOME/.config/omarchy/themes/fractal/aura/shell.qml"
 THEME_FILE="$HOME/.local/state/omarchy/current/theme.name"
 OFF="$HOME/.local/state/omarchy/toggles/fractal-aura-off"
 

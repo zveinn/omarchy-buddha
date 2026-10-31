@@ -71,13 +71,13 @@ void main() {
     float vis = smoothstep(prog * 0.52 + 0.004, prog * 0.52 - 0.03, sg);
 
     // beads: count rounded to a multiple of 9 (a mala has 108)
-    float spacing = mix(14.0, 12.0, lit);
+    float spacing = mix(14.0, 13.0, lit);
     float N = max(18.0, floor(L / spacing / 9.0 + 0.5) * 9.0);
     float u = sn * N;
     float k = floor(u);
     float da = (fract(u) - 0.5) * L / N;
     bool marker = mod(k, 9.0) == 0.0;
-    float br = (mix(1.7, 2.3, lit) + (marker ? 0.5 : 0.0)) * (0.9 + 0.12 * breath);
+    float br = (mix(1.7, 2.6, lit) + (marker ? 0.5 : 0.0)) * (0.9 + 0.12 * breath);
     float bd = length(vec2(da, dc));
     float bead = smoothstep(br + 0.8, br - 0.5, bd);
     float bshade = 0.75 + 0.45 * clamp(-(da + dc) / max(br, 0.1), -1.0, 1.0);   // tiny highlight
@@ -118,21 +118,27 @@ void main() {
     c += iri * halo;
     a += halo;
 
-    // lotus flowers at the four corners of the focused window
+    // lotus flowers at the four corners of the focused window: an eight-petal
+    // flower centred on the corner of the bead line (its inner quarter hides
+    // under the window), slowly turning with the breath
     if (lit > 0.5) {
-        float bloom = smoothstep(0.55, 1.0, prog);
+        float bloom = smoothstep(0.5, 1.0, prog);
         vec2 sp = sign(p);
-        vec2 cc = sp * (C + vec2(R * 0.7071));   // corner of the bead line
-        vec2 lp = ((p - cc) * sp) * mat2(0.7071, 0.7071, -0.7071, 0.7071);
-        float rho = length(lp), th = atan(lp.y, lp.x);
-        float Lp = band * 0.85 * bloom * (0.92 + 0.08 * breath);
-        float petal = Lp * pow(abs(cos(th * 2.5)), 0.7) * step(abs(th), 2.2);
-        float lotus = smoothstep(petal + 0.7, petal - 0.5, rho) * step(0.01, bloom);
-        float core = smoothstep(1.9, 0.9, rho) * bloom;
-        vec3 lc = mix(vec3(0.93, 0.62, 0.78), vec3(0.98, 0.86, 0.66), 1.0 - rho / max(Lp, 0.5));
-        c = mix(c, lc, lotus * 0.9);
-        c = mix(c, vec3(0.98, 0.84, 0.50), core);
-        a = max(a, max(lotus * 0.9, core));
+        vec2 cc = sp * (C + vec2(R * 0.7071));
+        vec2 lp = p - cc;
+        float rho = length(lp);
+        float th = atan(lp.y, lp.x) + 0.25 * breath + seed * TAU;
+        float Lp = band * 0.95 * bloom * (0.94 + 0.06 * breath);
+        float petal = Lp * (0.42 + 0.58 * pow(abs(cos(4.0 * th)), 0.55));
+        float inner = Lp * 0.55 * (0.5 + 0.5 * pow(abs(cos(4.0 * th + 0.785)), 0.55));
+        float outerP = smoothstep(petal + 0.7, petal - 0.5, rho) * step(0.01, bloom);
+        float innerP = smoothstep(inner + 0.6, inner - 0.4, rho) * step(0.01, bloom);
+        float core = smoothstep(1.8, 0.8, rho) * bloom;
+        vec3 lc = mix(vec3(0.70, 0.52, 0.86), vec3(0.94, 0.63, 0.79), smoothstep(Lp, Lp * 0.3, rho));
+        c = mix(c, lc, outerP * 0.92);
+        c = mix(c, vec3(0.97, 0.78, 0.84), innerP * 0.9);
+        c = mix(c, vec3(0.99, 0.86, 0.52), core);
+        a = max(a, max(outerP * 0.92, max(innerP * 0.9, core)));
     }
 
     a = clamp(a * vis, 0.0, 1.0);
