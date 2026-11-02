@@ -231,6 +231,13 @@ install_shell_json() {
     warn "$dest is not valid JSON: left alone"
     return 0
   fi
+  # a dry run doesn't really pause the live layers, so compare against the
+  # shell.json the hook would restore (what a real run merges into)
+  local cur="$dest" curtmp=""
+  if ((DRY)) && [[ -f $STATE/active && -x $SHELL_HOOK && -f $dest ]]; then
+    curtmp="$(mktemp)"
+    if "$SHELL_HOOK" --restored-shell-json > "$curtmp" 2>/dev/null && [[ -s $curtmp ]]; then cur="$curtmp"; fi
+  fi
   local tmp; tmp="$(mktemp)"
   if [[ -f $dest ]]; then
     jq -s --argjson ah "$AUTOHIDE" '
@@ -239,18 +246,25 @@ install_shell_json() {
       | .bar = (($u.bar // {}) * $m.bar)
       | .bar.autoHide = ($ah == 1)
       | .disabledPlugins = ((($u.disabledPlugins // []) + $m.disabledPlugins) | unique)
-    ' "$dest" "$src" > "$tmp"
+    ' "$cur" "$src" > "$tmp"
   else
     jq --argjson ah "$AUTOHIDE" '.bar.autoHide = ($ah == 1)' "$src" > "$tmp"
   fi
   ((AUTOHIDE)) || printf '    (--no-autohide: bar.autoHide = false)\n'
-  if [[ -f $dest ]] && cmp -s "$tmp" "$dest"; then
+  if [[ -f $dest ]] && cmp -s "$tmp" "$cur"; then
     printf '    = %s\n' "$(rel "$dest")"
   else
     printf '    (merged bar auto-hide + fractal.* disabledPlugins into your shell.json)\n'
     put "$tmp" "$dest"
   fi
-  rm -f "$tmp"
+  rm -f "$tmp" ${curtmp:+"$curtmp"}
+}
+
+# same_lua <a> <b>: true when two Lua files differ only in comments/blank lines
+same_lua() {
+  [[ -f $1 && -f $2 ]] || return 1
+  cmp -s <(sed -e 's/[[:space:]]*--.*$//' -e '/^[[:space:]]*$/d' "$1") \
+         <(sed -e 's/[[:space:]]*--.*$//' -e '/^[[:space:]]*$/d' "$2")
 }
 
 install_all() {
@@ -290,7 +304,13 @@ install_all() {
 
   if ((LOOKNFEEL)); then
     say "Hyprland look'n'feel (gaps) -> ~/.config/hypr/looknfeel.lua"
-    put "$HERE/config/hypr/looknfeel.lua" "$HOME/.config/hypr/looknfeel.lua"
+    # already the same settings (only comments differ, e.g. a dotfiles
+    # symlink): leave it as it is
+    if same_lua "$HERE/config/hypr/looknfeel.lua" "$HOME/.config/hypr/looknfeel.lua"; then
+      printf '    = %s (same settings)\n' ".config/hypr/looknfeel.lua"
+    else
+      put "$HERE/config/hypr/looknfeel.lua" "$HOME/.config/hypr/looknfeel.lua"
+    fi
   fi
 
   say "Heading font (Marcellus, OFL) -> ~/.local/share/fonts/fractal"

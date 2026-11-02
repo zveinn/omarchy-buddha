@@ -11,6 +11,7 @@
 # On ANY other theme it puts every one of those back exactly as recorded in
 # ~/.local/state/omarchy/fractal/ (never by comparing with the theme files),
 # then forgets the record. Running it twice is safe either way.
+# `fractal-shell --restored-shell-json` only prints the restored shell.json.
 set -u
 THEME="${1:-}"
 T="$HOME/.config/omarchy/themes/fractal"
@@ -88,18 +89,22 @@ shell_apply() {
     rm -f "$tmp"; log "could not update shell.json"
   fi
 }
-shell_restore() {
-  [[ -f $S/shell.orig.json && -f $CFG ]] || return 0
-  command -v jq >/dev/null || return 0
-  local tmp; tmp=$(mktemp "$CFG.fractal.XXXXXX") || return 0
-  if jq --slurpfile o "$S/shell.orig.json" '
+# shell_restored: print shell.json as it will be once restored (read-only).
+shell_restored() {
+  jq --slurpfile o "$S/shell.orig.json" '
       ($o[0]) as $o
       | (if $o.has_bar_id then .bar.id = $o.bar_id else del(.bar.id) end)
       | (if $o.has_center then .bar.centerAnchor = $o.center else del(.bar.centerAnchor) end)
       | (if $o.has_layout then .bar.layout = $o.layout else del(.bar.layout) end)
       | (if $o.has_dp then .disabledPlugins = $o.dp else del(.disabledPlugins) end)
       | (if $o.has_csr then .cloneSourceRestores = $o.csr else del(.cloneSourceRestores) end)
-    ' "$CFG" > "$tmp" && [[ -s $tmp ]]; then
+    ' "$CFG"
+}
+shell_restore() {
+  [[ -f $S/shell.orig.json && -f $CFG ]] || return 0
+  command -v jq >/dev/null || return 0
+  local tmp; tmp=$(mktemp "$CFG.fractal.XXXXXX") || return 0
+  if shell_restored > "$tmp" && [[ -s $tmp ]]; then
     if cmp -s "$tmp" "$CFG"; then rm -f "$tmp"; else replace_file "$CFG" "$tmp"; fi
   else
     rm -f "$tmp"; log "could not restore shell.json (record kept in $S)"; return 1
@@ -136,6 +141,8 @@ restore() {
 
 case $THEME in
   fractal) apply ;;
+  --restored-shell-json)   # read-only: what restore would leave (install.sh --dry-run)
+    if [[ -f $S/active && -f $S/shell.orig.json && -f $CFG ]]; then shell_restored; else cat "$CFG"; fi ;;
   *) restore ;;
 esac
 exit 0

@@ -60,9 +60,9 @@ cd ~/code/omarchy-fractal
 
 | flag | |
 |---|---|
-| `--dry-run` | print everything it would do and change nothing |
+| `--dry-run` | print everything it would do and change nothing (while fractal is live it compares against the `shell.json` the hook would restore, via the read-only `fractal-shell --restored-shell-json`) |
 | `--no-activate` | copy files only; don't switch theme or restart anything |
-| `--no-looknfeel` | leave `~/.config/hypr/looknfeel.lua` alone (it is replaced by default, and a symlink there becomes a real file; the original is backed up) |
+| `--no-looknfeel` | leave `~/.config/hypr/looknfeel.lua` alone (it is replaced by default, and a symlink there becomes a real file; the original is backed up. If it already has the same settings, only comments differing, it is left as it is) |
 | `--no-autohide` | `bar.autoHide = false` |
 | `--uninstall` | undo every install, newest first, back to the state before the first one |
 
