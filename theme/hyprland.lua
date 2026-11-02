@@ -5,10 +5,11 @@
 -- fractal-aura quickshell process (aura/Mala.qml). The focused window's beads
 -- shimmer, a light travels them like a counted mantra and lotus flowers bloom
 -- at its corners; the other windows' beads are dim violet and only breathe.
--- Windows open and close with a quiet ring of light that hugs their edge (it
--- breathes outward as they arrive, settles inward as they leave), the same
--- family as the float/fullscreen toggle; switching workspace rings out like a
--- singing bowl.
+-- Windows rise into place like a lotus surfacing (a short soft slide up out of
+-- a veil) and sink a little as they leave, each with a quiet ring of light that
+-- hugs their edge, the same family as the float/fullscreen toggle. Switching
+-- workspace lets the new one drift up like incense smoke while a lotus ring
+-- breathes around each of its windows in turn.
 
 local HIDDEN = "rgba(00000000)"
 
@@ -68,18 +69,30 @@ hl.curve("lotusOpen", { type = "bezier", points = { { 0.25, 0.8 }, { 0.35, 1.0 }
 hl.curve("lotusClose", { type = "bezier", points = { { 0.35, 0.0 }, { 0.65, 1.0 } } })  -- soft in-out: settles away, no pop
 hl.curve("breath", { type = "bezier", points = { { 0.45, 0.0 }, { 0.25, 1.0 } } })      -- in-out
 hl.curve("still", { type = "bezier", points = { { 0, 0 }, { 1, 1 } } })
+-- window open/close slide. Hyprland's slide always starts off the screen edge,
+-- so the travel is front-loaded and hidden in the fade: the window covers most
+-- of the way within a few frames while still nearly transparent (lotusVeil
+-- holds it back), and the visible part is a ~60-90 px rise that settles. On
+-- close it sinks ~15-30 px while fading, then leaves unseen.
+hl.curve("lotusRise", { type = "bezier", points = { { 0.05, 0.92 }, { 0.15, 1.0 } } })
+hl.curve("lotusVeil", { type = "bezier", points = { { 0.55, 0.0 }, { 0.45, 1.0 } } })
+hl.curve("lotusSink", { type = "bezier", points = { { 0.85, 0.0 }, { 0.95, 0.08 } } })
+-- workspaces: a critically damped spring (damping = 2*sqrt(stiffness*mass)),
+-- ~95% there at 215 ms, settled by ~300 ms, never overshoots. Springs run on
+-- physics, so the speed below is ignored for them. Bloom.qml mirrors it.
+hl.curve("lotusSpring", { type = "spring", mass = 1, stiffness = 484, dampening = 44 })
 
 -- Motion: ~200-300 ms everywhere (speed is in 100 ms units).
 hl.animation({ leaf = "windows", enabled = true, speed = 2.6, bezier = "lotusOpen" })
--- open/close barely zoom (96% / 97%): the window mostly just fades in and out
-hl.animation({ leaf = "windowsIn", enabled = true, speed = 2.6, bezier = "lotusOpen", style = "popin 96%" })
-hl.animation({ leaf = "windowsOut", enabled = true, speed = 2.4, bezier = "lotusClose", style = "popin 97%" })
+-- open: rises out of a veil; close: sinks a little and fades (see lotusRise)
+hl.animation({ leaf = "windowsIn", enabled = true, speed = 2.8, bezier = "lotusRise", style = "slide bottom" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 2.4, bezier = "lotusSink", style = "slide bottom" })
 hl.animation({ leaf = "windowsMove", enabled = true, speed = 2.6, bezier = "breath" })
 hl.animation({ leaf = "border", enabled = true, speed = 2, bezier = "still" })
 hl.animation({ leaf = "borderangle", enabled = false })
 hl.animation({ leaf = "fade", enabled = true, speed = 2.6, bezier = "breath" })
-hl.animation({ leaf = "fadeIn", enabled = true, speed = 2.6, bezier = "lotusOpen" })
-hl.animation({ leaf = "fadeOut", enabled = true, speed = 2.4, bezier = "lotusClose" })
+hl.animation({ leaf = "fadeIn", enabled = true, speed = 2.8, bezier = "lotusVeil" })
+hl.animation({ leaf = "fadeOut", enabled = true, speed = 2.4, bezier = "lotusOpen" })
 hl.animation({ leaf = "fadeSwitch", enabled = true, speed = 2.6, bezier = "breath" })
 hl.animation({ leaf = "fadeDim", enabled = true, speed = 3, bezier = "breath" })
 hl.animation({ leaf = "layers", enabled = true, speed = 2.6, bezier = "lotusOpen" })
@@ -87,10 +100,15 @@ hl.animation({ leaf = "layersIn", enabled = true, speed = 2.6, bezier = "lotusOp
 hl.animation({ leaf = "layersOut", enabled = true, speed = 2.0, bezier = "lotusClose", style = "fade" })
 hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 2.4, bezier = "lotusOpen" })
 hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 2.0, bezier = "lotusClose" })
--- Workspaces drift up through each other like incense smoke while the
--- singing-bowl ripple (aura/Bloom.qml) rings out from the centre.
-hl.animation({ leaf = "workspaces", enabled = true, speed = 2.8, bezier = "breath", style = "slidefadevert 6%" })
-hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 2.6, bezier = "lotusOpen", style = "slidefadevert 10%" })
+-- Workspaces: the new one drifts up (or down, going back) 16% like incense
+-- smoke while the old one simply fades where it is; aura/Bloom.qml breathes a
+-- lotus ring around each arriving window in turn, riding the same spring.
+hl.animation({ leaf = "workspaces", enabled = true, speed = 3, spring = "lotusSpring", style = "slidefadevert 16%" })
+hl.animation({ leaf = "workspacesIn", enabled = true, speed = 3, spring = "lotusSpring", style = "slidefadevert 16%" })
+hl.animation({ leaf = "workspacesOut", enabled = true, speed = 3, spring = "lotusSpring", style = "fade" })
+hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 3, spring = "lotusSpring", style = "slidefadevert 16%" })
+hl.animation({ leaf = "specialWorkspaceIn", enabled = true, speed = 3, spring = "lotusSpring", style = "slidefadevert 16%" })
+hl.animation({ leaf = "specialWorkspaceOut", enabled = true, speed = 3, spring = "lotusSpring", style = "fade" })
 
 -- ─── SMART GAPS ─────────────────────────────────────────────────────────────
 -- A lone tiled window, or a fullscreen one, fills the screen edge to edge with
@@ -245,8 +263,48 @@ hl.timer(function() update() end, { timeout = 16, type = "repeat" })
 --   window open:      a quiet ring of light at the edge breathes outward
 --   window close:     the ring settles inward onto the edge and fades
 --   float/fullscreen: one soft ring of petals at the new geometry
---   workspace switch: a lotus mark and singing-bowl ripples from the centre
+--   workspace switch: a lotus ring breathes around each window of the new
+--                     workspace in turn (nearest the cursor first); with no
+--                     ringed window there, a quiet lotus ripple instead
 local function tfx(args) fractal_fx_send("trans " .. args) end
+-- the windows that wear a mala on workspace id (same rule as the rings: none
+-- on a fullscreen workspace, none for a lone tiled window), nearest the cursor
+-- first, at most 8: "x y w h x y w h ..."
+local function ws_rects(id)
+  local ok, out = pcall(function()
+    local wins, tiled = {}, 0
+    for _, x in ipairs(hl.get_windows()) do
+      if x.workspace and x.workspace.id == id and x.mapped ~= false and not x.hidden then
+        if x.fullscreen and x.fullscreen ~= 0 then return "" end
+        if not x.floating then tiled = tiled + 1 end
+        wins[#wins + 1] = { x = x.at.x, y = x.at.y, w = x.size.x, h = x.size.y, f = x.floating }
+      end
+    end
+    local cx, cy = nil, nil
+    pcall(function() local p = hl.get_cursor_pos(); cx, cy = p.x, p.y end)
+    local list = {}
+    for _, r in ipairs(wins) do
+      if r.f or tiled > 1 then
+        local d = r.x
+        if cx then
+          local dx = math.max(r.x - cx, 0, cx - (r.x + r.w))
+          local dy = math.max(r.y - cy, 0, cy - (r.y + r.h))
+          d = dx * dx + dy * dy
+        end
+        r.d = d
+        list[#list + 1] = r
+      end
+    end
+    table.sort(list, function(a, b) if a.d ~= b.d then return a.d < b.d end return a.x < b.x end)
+    local parts = {}
+    for i = 1, math.min(#list, 8) do
+      local r = list[i]
+      parts[#parts + 1] = string.format("%d %d %d %d", r.x, r.y, r.w, r.h)
+    end
+    return table.concat(parts, " ")
+  end)
+  return ok and out or ""
+end
 local last_ws = nil
 hl.on("workspace.active", function(ws)
   local ok, id = pcall(function() return ws.id end)
@@ -254,7 +312,14 @@ hl.on("workspace.active", function(ws)
   local prev = last_ws
   last_ws = id
   if prev == nil then return end
-  tfx(string.format("workspace %d %d", id, id > prev and 1 or -1))
+  local mon = "-"
+  pcall(function()
+    for _, m in ipairs(hl.get_monitors()) do
+      if m.active_workspace and m.active_workspace.id == id then mon = m.name end
+    end
+  end)
+  local rects = ws_rects(id)
+  tfx(string.format("workspace %d %d %s%s", id, id > prev and 1 or -1, mon, rects ~= "" and (" " .. rects) or ""))
 end)
 
 hl.on("window.open", function(w)

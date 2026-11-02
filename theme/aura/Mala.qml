@@ -38,6 +38,24 @@ PanelWindow {
 
   ListModel { id: rings }
 
+  // workspace switch: the beads arrive with the new workspace, riding the same
+  // slidefadevert 16% on lotusSpring (critically damped, w = 22/s) and fading
+  // in with it, instead of waiting in place while the windows drift up
+  property real wsT: 1000
+  property real wsDir: 1
+  readonly property real wsV: wsT <= 0 ? 0 : Math.min(1, 1 - Math.exp(-22 * wsT / 1000) * (1 + 22 * wsT / 1000))
+  function arrive(dir, mon) {
+    if (!fx.visible || (mon && mon !== "-" && mon !== fx.modelData.name)) return
+    wsDir = dir < 0 ? -1 : 1
+    wsT = 20          // the event reaches us about a frame late
+    wsClock.restart()
+  }
+  FrameAnimation {
+    id: wsClock
+    running: false
+    onTriggered: { fx.wsT += frameTime * 1000; if (fx.wsT > 500) { fx.wsT = 1000; stop() } }
+  }
+
   // list: "addr x y w h floating active [mx my mw mh ...];..."
   function setList(list) {
     const want = []
@@ -61,39 +79,45 @@ PanelWindow {
     })
   }
 
-  Repeater {
-    model: rings
-    ShaderEffect {
-      id: ring
-      required property string addr
-      required property real gx; required property real gy
-      required property real gw; required property real gh
-      required property bool act
-      required property string masks
-      required property int index
-      x: gx - fx.modelData.x - fx.band; y: gy - fx.modelData.y - fx.band
-      width: gw + 2 * fx.band; height: gh + 2 * fx.band
-      // a stable per-window phase from the address
-      readonly property real seed: (parseInt(addr.slice(-5), 16) % 997) / 997
-      property real time: (act ? fx.activeTime : fx.idleTime) % 240
-      property real prog: 1
-      property real lit: act ? 1 : 0
-      property real band: fx.band
-      property real radius: fx.radius
-      property vector2d res: Qt.vector2d(width, height)
-      property vector4d m0: mrect(0)
-      property vector4d m1: mrect(1)
-      property vector4d m2: mrect(2)
-      property vector4d m3: mrect(3)
-      function mrect(k) {
-        const v = masks.length ? masks.split(" ").map(Number) : []
-        if (v.length < k * 4 + 4) return Qt.vector4d(0, 0, 0, 0)
-        return Qt.vector4d(v[k * 4] - gx + fx.band, v[k * 4 + 1] - gy + fx.band, v[k * 4 + 2], v[k * 4 + 3])
+  Item {
+    id: stage
+    width: fx.width; height: fx.height
+    y: fx.wsDir * fx.height * 0.16 * (1 - fx.wsV)
+    opacity: fx.wsV
+    Repeater {
+      model: rings
+      ShaderEffect {
+        id: ring
+        required property string addr
+        required property real gx; required property real gy
+        required property real gw; required property real gh
+        required property bool act
+        required property string masks
+        required property int index
+        x: gx - fx.modelData.x - fx.band; y: gy - fx.modelData.y - fx.band
+        width: gw + 2 * fx.band; height: gh + 2 * fx.band
+        // a stable per-window phase from the address
+        readonly property real seed: (parseInt(addr.slice(-5), 16) % 997) / 997
+        property real time: (act ? fx.activeTime : fx.idleTime) % 240
+        property real prog: 1
+        property real lit: act ? 1 : 0
+        property real band: fx.band
+        property real radius: fx.radius
+        property vector2d res: Qt.vector2d(width, height)
+        property vector4d m0: mrect(0)
+        property vector4d m1: mrect(1)
+        property vector4d m2: mrect(2)
+        property vector4d m3: mrect(3)
+        function mrect(k) {
+          const v = masks.length ? masks.split(" ").map(Number) : []
+          if (v.length < k * 4 + 4) return Qt.vector4d(0, 0, 0, 0)
+          return Qt.vector4d(v[k * 4] - gx + fx.band, v[k * 4 + 1] - gy + fx.band, v[k * 4 + 2], v[k * 4 + 3])
+        }
+        fragmentShader: Qt.resolvedUrl("mala.frag.qsb")
+        Component.onCompleted: if (act) intro.restart()
+        onActChanged: if (act) intro.restart(); else { intro.stop(); prog = 1 }
+        NumberAnimation { id: intro; target: ring; property: "prog"; from: 0; to: 1; duration: 520; easing.type: Easing.OutCubic }
       }
-      fragmentShader: Qt.resolvedUrl("mala.frag.qsb")
-      Component.onCompleted: if (act) intro.restart()
-      onActChanged: if (act) intro.restart(); else { intro.stop(); prog = 1 }
-      NumberAnimation { id: intro; target: ring; property: "prog"; from: 0; to: 1; duration: 520; easing.type: Easing.OutCubic }
     }
   }
 
