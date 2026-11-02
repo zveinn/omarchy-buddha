@@ -325,6 +325,9 @@ Panel {
 
   KeyboardPanel {
     id: panel
+    // room for the mala ring (band 12) to the bar and screen edges
+    margin: Math.max(Style.gapsOut, root.fxOn ? 12 : 0)
+    gap: Math.max(Style.gapsOut, root.fxOn ? 12 : 0)
     anchorItem: root.anchorItem
     owner: root.barIdentity
     bar: root.bar

@@ -31,7 +31,7 @@ Item {
   readonly property bool fxOn: fxMode === "always" || (fxMode === "theme" && fxGate.active)
   readonly property color fxHot: "#ffe3a3"
   property bool fxShown: false
-  // mala ring (fx/MalaRing.qml) needs a 10px band outside the card
+  // mala ring (fx/MalaRing.qml) needs a 12px band outside the card
   readonly property int fxEdge: root.fxOn ? Math.max(Style.gapsOut, 12) : Style.gapsOut
   property bool fxInstantClose: false
   property real fxDecodeStart: 0

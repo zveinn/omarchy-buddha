@@ -1006,6 +1006,9 @@ Panel {
   // here is the wifi-specific UI inside.
   KeyboardPanel {
     id: panel
+    // room for the mala ring (band 12) to the bar and screen edges
+    margin: Math.max(Style.gapsOut, root.fxOn ? 12 : 0)
+    gap: Math.max(Style.gapsOut, root.fxOn ? 12 : 0)
     anchorItem: button
     owner: root
     bar: root.bar

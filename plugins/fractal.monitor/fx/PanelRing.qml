@@ -2,7 +2,9 @@ import QtQuick
 
 // Mala-ring host for a bar popup card. Creates one MalaRing as a
 // SIBLING of the card (child of the popup window's content item, so it is
-// not clipped by the card and sits just outside its edge), hides the card's
+// not clipped by the card and sits just outside its edge; the ring's band
+// matches the window rings, the panel keeps that much room to the bar and the
+// screen edges), hides the card's
 // stock border while the ring is active (same as the launcher: the ring
 // replaces the border, widths kept so the layout does not move), and drives
 // the ring in step with the panel's lotus iris in/out. Nothing ticks while
@@ -34,7 +36,7 @@ Item {
     if (host.ring && host.ring.parent !== host.card.parent) drop()
     if (!host.ring)
       host.ring = ringComp.createObject(host.card.parent, {
-        target: host.card, band: 9, openDuration: host.openDuration, closeDuration: host.closeDuration
+        target: host.card, openDuration: host.openDuration, closeDuration: host.closeDuration
       })
     return host.ring
   }

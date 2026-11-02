@@ -87,7 +87,7 @@ BarWidget {
   // the card is inset by that band and the anchor margin shrinks by it: the
   // card keeps its exact on-screen position and size, the ring gets room.
   // The band is masked out of input (clicks there dismiss like outside).
-  readonly property int ringPad: fxOn ? 10 : 0
+  readonly property int ringPad: fxOn ? 12 : 0   // = the ring band (MalaRing)
   function popupCardOf(content) { return content && content.parent ? content.parent.parent : null }
   function applyRingPad() {
     var cards = [popupCardOf(trayMenuLayout), popupCardOf(manageColumn)]
@@ -571,7 +571,7 @@ BarWidget {
     owner: root
     bar: root.bar
     open: root.managePopupOpen || root.manageHeld
-    margin: Style.gapsOut - root.ringPad
+    margin: Math.max(Style.gapsOut, root.ringPad) - root.ringPad
     mask: Region { item: root.popupCardOf(manageColumn) }
     contentWidth: managePopup.fittedContentWidth(Style.space(300)) + 2 * root.ringPad
     contentHeight: managePopup.fittedContentHeight(manageColumn.implicitHeight) + 2 * root.ringPad
@@ -710,7 +710,7 @@ BarWidget {
     onVisibleChanged: if (!visible) root.resetTrayMenu()
     padding: Style.space(8)
     borderColor: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.45)
-    margin: Style.gapsOut - root.ringPad
+    margin: Math.max(Style.gapsOut, root.ringPad) - root.ringPad
     mask: Region { item: root.popupCardOf(trayMenuLayout) }
     contentWidth: trayMenuPopup.fittedContentWidth(Style.space(232)) + 2 * root.ringPad
     contentHeight: trayMenuPopup.fittedContentHeight(menuHeaderHeight + trayMenuColumn.implicitHeight, Style.space(420)) + 2 * root.ringPad

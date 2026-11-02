@@ -17,7 +17,9 @@ Item {
   property Item target: null
   property real scaleX: 1
   property real scaleY: 1
-  property int band: 10
+  // same band as the window rings (theme/aura/Mala.qml), so the shared lotus
+  // corner (shaders/lotus-corner.glsl, sized from the band) matches them
+  property int band: 12
   property color tint: "#e6b35a"      // kept for API compatibility
   property real bright: 1.0           // kept for API compatibility
   property real prog: 0
