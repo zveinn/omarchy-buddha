@@ -34,7 +34,7 @@ Soft and warm, never neon, and every text colour stays readable on the glass.
 - Inactive windows get dim violet beads that only breathe.
 
 **Lotus transitions (about 200–300 ms)**
-- Window open: three rings of petals unfold and dissolve outward as the window arrives. Close: the petals fold back into a saffron spark. Float or fullscreen toggle: a soft ring of petals hugs the window edge and travels with it from the old rect to the new one. The petals use the same bezier curves and timing as Hyprland's window animations (open 280 ms, close 240 ms, move 260 ms), run per rendered frame from a warm, pre-created pool, and fade in and out with antialiased lines.
+- Window open: a quiet, scalloped ring of light hugs the window edge and breathes a few pixels outward as it fades. Close: the reverse, the ring settles inward onto the edge and fades. Windows themselves barely zoom (popin 96% in, 97% out) and mostly just fade. Float or fullscreen toggle: a soft ring of petals hugs the window edge and travels with it from the old rect to the new one. The rings use the same bezier curves and timing as Hyprland's window animations (open 260 ms, close 240 ms, move 260 ms) and follow the window's popin scale, run per rendered frame from a warm, pre-created pool, and fade in and out with antialiased lines.
 - Workspace switch: a lotus mark opens at the centre of the screen and three ripples run outward like a struck singing bowl.
 - Hyprland's own animations use soft ease-out/ease-in curves at 220–280 ms.
 

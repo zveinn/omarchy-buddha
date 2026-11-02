@@ -5,8 +5,10 @@
 -- fractal-aura quickshell process (aura/Mala.qml). The focused window's beads
 -- shimmer, a light travels them like a counted mantra and lotus flowers bloom
 -- at its corners; the other windows' beads are dim violet and only breathe.
--- Windows bloom open out of unfolding lotus petals and fold back into a spark
--- when they close; switching workspace rings out like a singing bowl.
+-- Windows open and close with a quiet ring of light that hugs their edge (it
+-- breathes outward as they arrive, settles inward as they leave), the same
+-- family as the float/fullscreen toggle; switching workspace rings out like a
+-- singing bowl.
 
 local HIDDEN = "rgba(00000000)"
 
@@ -63,20 +65,21 @@ hl.config({
 -- aura/Bloom.qml animates its petals with these very control points, so the
 -- petals and the windows move as one.
 hl.curve("lotusOpen", { type = "bezier", points = { { 0.25, 0.8 }, { 0.35, 1.0 } } })   -- soft ease-out, no snap in the first frames
-hl.curve("lotusClose", { type = "bezier", points = { { 0.5, 0.0 }, { 0.75, 0.75 } } })  -- ease-in that still lands softly (no cut-off pop)
+hl.curve("lotusClose", { type = "bezier", points = { { 0.35, 0.0 }, { 0.65, 1.0 } } })  -- soft in-out: settles away, no pop
 hl.curve("breath", { type = "bezier", points = { { 0.45, 0.0 }, { 0.25, 1.0 } } })      -- in-out
 hl.curve("still", { type = "bezier", points = { { 0, 0 }, { 1, 1 } } })
 
 -- Motion: ~200-300 ms everywhere (speed is in 100 ms units).
 hl.animation({ leaf = "windows", enabled = true, speed = 2.6, bezier = "lotusOpen" })
-hl.animation({ leaf = "windowsIn", enabled = true, speed = 2.8, bezier = "lotusOpen", style = "popin 90%" })
-hl.animation({ leaf = "windowsOut", enabled = true, speed = 2.4, bezier = "lotusClose", style = "popin 92%" })
+-- open/close barely zoom (96% / 97%): the window mostly just fades in and out
+hl.animation({ leaf = "windowsIn", enabled = true, speed = 2.6, bezier = "lotusOpen", style = "popin 96%" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 2.4, bezier = "lotusClose", style = "popin 97%" })
 hl.animation({ leaf = "windowsMove", enabled = true, speed = 2.6, bezier = "breath" })
 hl.animation({ leaf = "border", enabled = true, speed = 2, bezier = "still" })
 hl.animation({ leaf = "borderangle", enabled = false })
 hl.animation({ leaf = "fade", enabled = true, speed = 2.6, bezier = "breath" })
 hl.animation({ leaf = "fadeIn", enabled = true, speed = 2.6, bezier = "lotusOpen" })
-hl.animation({ leaf = "fadeOut", enabled = true, speed = 2.2, bezier = "lotusClose" })
+hl.animation({ leaf = "fadeOut", enabled = true, speed = 2.4, bezier = "lotusClose" })
 hl.animation({ leaf = "fadeSwitch", enabled = true, speed = 2.6, bezier = "breath" })
 hl.animation({ leaf = "fadeDim", enabled = true, speed = 3, bezier = "breath" })
 hl.animation({ leaf = "layers", enabled = true, speed = 2.6, bezier = "lotusOpen" })
@@ -239,8 +242,8 @@ hl.timer(function() update() end, { timeout = 16, type = "repeat" })
 
 -- ─── LOTUS TRANSITIONS ──────────────────────────────────────────────────────
 -- Drawn by aura/Bloom.qml:
---   window open:      three rings of lotus petals unfold over the window
---   window close:     the petals fold back inward into a saffron spark
+--   window open:      a quiet ring of light at the edge breathes outward
+--   window close:     the ring settles inward onto the edge and fades
 --   float/fullscreen: one soft ring of petals at the new geometry
 --   workspace switch: a lotus mark and singing-bowl ripples from the centre
 local function tfx(args) fractal_fx_send("trans " .. args) end

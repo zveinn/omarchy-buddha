@@ -1,12 +1,13 @@
 #version 440
-// Window transition (fractal theme): a lotus bloom over the window rect.
-// mode 0 open : three rings of petals unfold from the centre, rotating
-//               against each other, and dissolve outward as the window arrives.
-// mode 1 close: the petals fold back inward into a single saffron spark.
+// Window transitions (fractal theme): one family of soft edge rings that hug
+// the window and follow its own animation.
+// mode 0 open : a quiet scalloped line of light just inside the edge breathes
+//               a few px outward and fades as the window settles in.
+// mode 1 close: the reverse, the line settles inward onto the edge and fades.
 // mode 2 float/fullscreen toggle: one soft ring of petals that hugs the window
 //               edge while it travels, breathing outward and fading.
 // prog follows the window's own bezier (set in Bloom.qml), life is linear time
-// for the fade envelope; every line is at least ~1.3 px wide (antialiased).
+// for the fade envelope; every line is at least ~1.1 px wide (antialiased).
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
@@ -33,13 +34,6 @@ vec3 pal(float h) {
 float softLine(float d, float ww) {
     return exp(-(d * d) / (ww * ww)) + 0.3 * exp(-abs(d) / (2.5 * ww));
 }
-float rose(vec2 p, float n, float R, float rot, float w, float aa) {
-    float a = atan(p.y, p.x) + rot;
-    float r = length(p);
-    float edge = R * (0.55 + 0.45 * abs(cos(0.5 * n * a)));
-    float ww = max(w, aa);
-    return softLine(r - edge, ww) + smoothstep(edge + ww, edge - ww, r) * 0.16;
-}
 float sdRoundBox(vec2 p, vec2 b, float r) {
     vec2 q = abs(p) - b + r;
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
@@ -65,38 +59,36 @@ void main() {
         c = mix(pal(0.25 + seed * 0.5), pal(0.0 + seed * 0.5), 0.5 + 0.5 * sin(a * 2.0 + seed * TAU)) * k;
         v = k;
     } else {
-        // ── open / close: the lotus ──
-        float m = 0.5 * min(res.x, res.y);
-        vec2 p = (px - res * 0.5) / m;           // -1..1 on the short side
-        float aa = 1.3 / m;                      // ~1.3 px in p units
+        // ── open / close: the toggle's soft edge ring, quieter ──
+        // open : a thin scalloped line of light rises just inside the window
+        //        edge and breathes a few px outward as it fades, following the
+        //        window's popin 96% -> 100% (same curve, same clock).
+        // close: the reverse, the line sits just outside the edge and settles
+        //        inward onto the window as it shrinks to 97% and fades.
         bool closing = mode > 0.5;
-        float t = closing ? 1.0 - prog : prog;   // close runs backwards
-        env = closing ? smoothstep(0.0, 0.15, life) * (1.0 - smoothstep(0.7, 1.0, life))
-                      : smoothstep(0.0, 0.18, life) * (1.0 - smoothstep(0.5, 1.0, life));
-        float w = 0.010 + 0.008 * (1.0 - t);
-        float R = 0.15 + 1.05 * t;
-        float rot = (1.0 - t) * 1.2 + seed;
-        float k1 = rose(p, 6.0, R * 0.55, rot, w, aa);
-        float k2 = rose(p, 8.0, R * 0.80, -rot * 1.3, w, aa);
-        float k3 = rose(p, 12.0, R * 1.05, rot * 0.7, w, aa);
-        c = pal(seed) * k1 + pal(seed + 0.25) * k2 + pal(seed + 0.5) * k3;
-        v = k1 + k2 + k3;
-        // a whisper of indigo veil that clears as the bloom opens / gathers as it closes
-        float veil = (closing ? t : 1.0 - t) * 0.20 * smoothstep(1.4, 0.2, length(p));
-        c += vec3(0.07, 0.05, 0.15) * veil; v += veil;
-        c *= env; v *= env;
-        // the spark at the centre when closing, with its own soft envelope
-        if (closing) {
-            float se = smoothstep(0.35, 0.8, life) * (1.0 - smoothstep(0.85, 1.0, life));
-            float sp = exp(-length(p) / max(0.03 + 0.05 * (1.0 - life), aa)) * se;
-            c += vec3(0.98, 0.82, 0.50) * sp * 1.5; v += sp;
-        }
-        env = 1.0;
+        env = closing ? smoothstep(0.0, 0.18, life) * (1.0 - smoothstep(0.35, 1.0, life))
+                      : smoothstep(0.0, 0.25, life) * (1.0 - smoothstep(0.45, 1.0, life));
+        float sc0 = closing ? mix(1.0, 0.97, prog) : mix(0.96, 1.0, prog);   // Hyprland popin
+        vec2 q = px - res * 0.5;
+        vec2 hs = max(res * 0.5 - vec2(pad), vec2(4.0)) * sc0;
+        float d = sdRoundBox(q, hs, min(10.0, min(hs.x, hs.y)));
+        float a = atan(q.y / hs.y, q.x / hs.x);
+        float n = 2.0 * max(6.0, floor((hs.x + hs.y) / 70.0));
+        float sc = pow(abs(cos(0.5 * n * a + seed * TAU)), 1.5);
+        float br = closing ? 1.0 - prog : prog;     // 0 at the edge .. 1 breathed out
+        float edge = closing ? mix(pad * 0.28, -2.0, prog) + sc * (2.0 + 4.0 * br)
+                             : mix(-3.0, pad * 0.35, prog) + sc * (2.0 + 4.0 * br);
+        float ww = 1.1 + 0.6 * (1.0 - br);
+        float k = softLine(d - edge, ww) * 0.55
+                + smoothstep(edge + ww, edge - ww, d) * smoothstep(-12.0, 0.0, d) * 0.05;
+        c = mix(pal(0.25 + seed * 0.5), pal(0.0 + seed * 0.5), 0.5 + 0.5 * sin(a * 2.0 + seed * TAU)) * k;
+        v = k;
+        env *= closing ? 0.5 : 0.6;                    // dimmer than the toggle
     }
     // feather to nothing at the item border: petals that reach past it fade
     // out instead of being clipped flat
     float dEdge = min(min(px.x, px.y), min(res.x - px.x, res.y - px.y));
-    float feather = smoothstep(0.0, mode > 1.5 ? 6.0 : max(pad, 8.0), dEdge);
+    float feather = smoothstep(0.0, 6.0, dEdge);
     float a = clamp(v * env * 0.85 * feather, 0.0, 1.0);
     vec3 col = c * env * 0.85 * feather;
     fragColor = vec4(min(col, vec3(a)), a) * qt_Opacity;

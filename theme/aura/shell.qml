@@ -4,7 +4,7 @@
 //              fractal mandala behind him (aura.frag, 30 fps, half resolution,
 //              paused while a window covers the screen or the screensaver runs)
 //   * Mala   - prayer-bead rings around every window (mala.frag)
-//   * Bloom  - lotus bloom on window open/close, singing-bowl ripple on
+//   * Bloom  - soft edge rings on window open/close, singing-bowl ripple on
 //              workspace switch (bloom.frag, ripple.frag)
 // Driven by the theme's hyprland.lua over $XDG_RUNTIME_DIR/fractal-fx.
 // Everything is hidden (and the timers stop) unless the active theme is fractal.
