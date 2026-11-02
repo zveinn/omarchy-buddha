@@ -7,7 +7,8 @@
 //   workspace(id, dir, mon, rects)
 //       a lotus ring breathes around each window of the arriving workspace in
 //       turn (rects come nearest-the-cursor first, 35 ms apart), riding the
-//       workspace's own slide; with no rects, a quiet singing-bowl ripple
+//       workspace's own slide; with no rects, nothing (the native slide/fade
+//       is enough)
 //
 // Smoothness notes:
 // - the layer and a small pool of ShaderEffects are created once and kept warm;
@@ -142,24 +143,8 @@ PanelWindow {
       slot.play(3, x - ox, y - oy, w, h, x - ox, y - oy, w, h, n * fx.wsStagger, (id * 0.137 + n * 0.29) % 1, dir)
       n++
     }
-    if (n > 0) return
-    // nothing ringed there (empty, fullscreen or a lone window): a quiet ripple
-    ripple.dir = dir
-    ripple.seed = (id * 0.137) % 1
-    rippleAnim.restart()
-  }
-
-  ShaderEffect {
-    id: ripple
-    anchors.fill: parent
-    visible: rippleAnim.running
-    opacity: 0.55            // toned down: only the fallback now
-    property real prog: 0
-    property real dir: 1
-    property real seed: 0
-    property vector2d res: Qt.vector2d(width, height)
-    fragmentShader: Qt.resolvedUrl("ripple.frag.qsb")
-    NumberAnimation on prog { id: rippleAnim; running: false; from: 0; to: 1; duration: 320; easing.type: Easing.OutQuad }
+    // nothing ringed there (empty, fullscreen or a lone window): no overlay,
+    // the native slide/fade carries the switch on its own
   }
 
   Repeater {

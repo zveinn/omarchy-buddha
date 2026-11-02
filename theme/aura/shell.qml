@@ -5,8 +5,7 @@
 //              paused while a window covers the screen or the screensaver runs)
 //   * Mala   - prayer-bead rings around every window (mala.frag)
 //   * Bloom  - soft edge rings on window open/close, and on workspace switch
-//              a lotus ring around each arriving window in turn (a quiet
-//              singing-bowl ripple when there is none) (bloom.frag, ripple.frag)
+//              a lotus ring around each arriving window in turn (bloom.frag)
 // Driven by the theme's hyprland.lua over $XDG_RUNTIME_DIR/fractal-fx.
 // Everything is hidden (and the timers stop) unless the active theme is fractal.
 import QtQuick

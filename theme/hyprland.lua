@@ -265,7 +265,7 @@ hl.timer(function() update() end, { timeout = 16, type = "repeat" })
 --   float/fullscreen: one soft ring of petals at the new geometry
 --   workspace switch: a lotus ring breathes around each window of the new
 --                     workspace in turn (nearest the cursor first); with no
---                     ringed window there, a quiet lotus ripple instead
+--                     ringed window there, nothing beyond the native slide
 local function tfx(args) fractal_fx_send("trans " .. args) end
 -- the windows that wear a mala on workspace id (same rule as the rings: none
 -- on a fullscreen workspace, none for a lone tiled window), nearest the cursor
